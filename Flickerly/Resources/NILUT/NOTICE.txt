@@ -1,0 +1,18 @@
+NILUT: Conditional Neural Implicit 3D Lookup Tables for Image Enhancement
+Marcos V. Conde, Javier Vazquez-Corral, Michael S. Brown, Radu Timofte. AAAI 2024.
+https://github.com/mv-lab/nilut
+Source revision: effe074007edf48b1081f3838b8d30bee8ec18e1
+
+N1-N3 were generated from the official nilutx3style.pt weights.
+Style 1 = LUT01; Style 2 = LUT03; Style 3 = LUT04.
+The original model is approximated with a 65x65x65 sRGB lattice.
+NILUT source copyright (c) 2023 Marcos V. Conde, MIT License (see LICENSE.txt).
+
+N4 Natural, N5 Soft Warm and N6 Cool Matte are original Flickerly grades.
+A separate conditional residual NILUT was fitted to three authored 65-cubed LUTs.
+N4 and N5 use the revised v2 targets/network; N6 retains the v1 network output.
+No upstream model weights, style mixtures, or photographs were used for that fit.
+Architecture adapted from the MIT-licensed NILUT implementation.
+Training sources, target LUTs, checkpoint, hashes and measured errors are preserved
+in scripts/train_nilut_originals.py and artifacts/nilut-originals/.
+All six styles are baked offline; only their color cubes ship in the app.

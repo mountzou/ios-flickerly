@@ -1,0 +1,414 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 70;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0991BDD17C85980D0B4BE5D2 /* PhotoRendererTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FDA294E00EF539A965E3A93 /* PhotoRendererTests.swift */; };
+		0ACA499D4C1DDB86B518E08B /* FlickerlyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2726A35BC6D7FE0EB69E0F88 /* FlickerlyApp.swift */; };
+		0E7F3DBA4BED6E571797EDEA /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D457B38852D2D16CBEE22FA /* EditorView.swift */; };
+		42B8BF7D3F9C13606B30BD96 /* PhotoPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE6091802E2C2FB3C1FE7E6 /* PhotoPreset.swift */; };
+		CE34C5B81D83D4DF6BB87ACE /* EditorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48B54D80EA89C58D7FB0F1C5 /* EditorModel.swift */; };
+		FEBA36398E809C8BB389843A /* PhotoRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE9BC7247B9DE70BF4D0770D /* PhotoRenderer.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E9CA66683FF22D7B8CC65928 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C13732C8E715C9BEE4FA51C9;
+			remoteInfo = Flickerly;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		2726A35BC6D7FE0EB69E0F88 /* FlickerlyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlickerlyApp.swift; sourceTree = "<group>"; };
+		3B624749308C25A1005EC583 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		48B54D80EA89C58D7FB0F1C5 /* EditorModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorModel.swift; sourceTree = "<group>"; };
+		4FDA294E00EF539A965E3A93 /* PhotoRendererTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoRendererTests.swift; sourceTree = "<group>"; };
+		8BCD5BC4CDFDF0918087C782 /* Flickerly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Flickerly.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D457B38852D2D16CBEE22FA /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		CE9BC7247B9DE70BF4D0770D /* PhotoRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoRenderer.swift; sourceTree = "<group>"; };
+		EBE6091802E2C2FB3C1FE7E6 /* PhotoPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPreset.swift; sourceTree = "<group>"; };
+		F219C0274590DA45E4BEF1EA /* FlickerlyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlickerlyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		3B624B30308CDF74005EC583 /* NILUT */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); name = NILUT; path = Resources/NILUT; sourceTree = "<group>"; };
+		3B624B9C308D228A005EC583 /* Fonts */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); name = Fonts; path = Resources/Fonts; sourceTree = "<group>"; };
+		3B624C01308D2761005EC583 /* Library */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Library; sourceTree = "<group>"; };
+		3B624C06308D2779005EC583 /* Catalog */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Catalog; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1ABF84E55BD30AC2CEF8FC42 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		78AE8C6BEB2A40A6D824CCEE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		69F8D45498D7E20DA99BB780 /* Flickerly */ = {
+			isa = PBXGroup;
+			children = (
+				3B624C06308D2779005EC583 /* Catalog */,
+				3B624C01308D2761005EC583 /* Library */,
+				3B624B9C308D228A005EC583 /* Fonts */,
+				3B624B30308CDF74005EC583 /* NILUT */,
+				3B624749308C25A1005EC583 /* Info.plist */,
+				2726A35BC6D7FE0EB69E0F88 /* FlickerlyApp.swift */,
+				EBE6091802E2C2FB3C1FE7E6 /* PhotoPreset.swift */,
+				CE9BC7247B9DE70BF4D0770D /* PhotoRenderer.swift */,
+				48B54D80EA89C58D7FB0F1C5 /* EditorModel.swift */,
+				8D457B38852D2D16CBEE22FA /* EditorView.swift */,
+			);
+			path = Flickerly;
+			sourceTree = "<group>";
+		};
+		BFC937463906E5DB7A02A37C /* FlickerlyTests */ = {
+			isa = PBXGroup;
+			children = (
+				4FDA294E00EF539A965E3A93 /* PhotoRendererTests.swift */,
+			);
+			path = FlickerlyTests;
+			sourceTree = "<group>";
+		};
+		E50290A24C49A459B43487C5 = {
+			isa = PBXGroup;
+			children = (
+				69F8D45498D7E20DA99BB780 /* Flickerly */,
+				BFC937463906E5DB7A02A37C /* FlickerlyTests */,
+				FBDC4F23F93125BBEEAE800C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FBDC4F23F93125BBEEAE800C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8BCD5BC4CDFDF0918087C782 /* Flickerly.app */,
+				F219C0274590DA45E4BEF1EA /* FlickerlyTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		64BCB755386F844C96A2A5B0 /* FlickerlyTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BBD1A4309DD6635F34F23AFF /* Build configuration list for PBXNativeTarget "FlickerlyTests" */;
+			buildPhases = (
+				6E431EB0650617AA1756B320 /* Sources */,
+				1ABF84E55BD30AC2CEF8FC42 /* Frameworks */,
+				7DED7670B79BEA8B7480B1FC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C58B1D22E6B06406536A4294 /* PBXTargetDependency */,
+			);
+			name = FlickerlyTests;
+			productName = FlickerlyTests;
+			productReference = F219C0274590DA45E4BEF1EA /* FlickerlyTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		C13732C8E715C9BEE4FA51C9 /* Flickerly */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A296CF4B7E708AB4E80076A9 /* Build configuration list for PBXNativeTarget "Flickerly" */;
+			buildPhases = (
+				971ED9D05B25DB6C4D7680D4 /* Sources */,
+				78AE8C6BEB2A40A6D824CCEE /* Frameworks */,
+				364863F9F2E558B0F50473FC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				3B624B30308CDF74005EC583 /* NILUT */,
+				3B624B9C308D228A005EC583 /* Fonts */,
+				3B624C01308D2761005EC583 /* Library */,
+				3B624C06308D2779005EC583 /* Catalog */,
+			);
+			name = Flickerly;
+			productName = Flickerly;
+			productReference = 8BCD5BC4CDFDF0918087C782 /* Flickerly.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		98F54143AB4E86B28C3AFEE0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 2710;
+				LastUpgradeCheck = 2710;
+				TargetAttributes = {
+					64BCB755386F844C96A2A5B0 = {
+						CreatedOnToolsVersion = 27.1;
+						TestTargetID = C13732C8E715C9BEE4FA51C9;
+					};
+					C13732C8E715C9BEE4FA51C9 = {
+						CreatedOnToolsVersion = 27.1;
+					};
+				};
+			};
+			buildConfigurationList = 41A2CC2D5321B7BB2E956CA5 /* Build configuration list for PBXProject "Flickerly" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E50290A24C49A459B43487C5;
+			productRefGroup = FBDC4F23F93125BBEEAE800C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C13732C8E715C9BEE4FA51C9 /* Flickerly */,
+				64BCB755386F844C96A2A5B0 /* FlickerlyTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		364863F9F2E558B0F50473FC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7DED7670B79BEA8B7480B1FC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6E431EB0650617AA1756B320 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0991BDD17C85980D0B4BE5D2 /* PhotoRendererTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		971ED9D05B25DB6C4D7680D4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0ACA499D4C1DDB86B518E08B /* FlickerlyApp.swift in Sources */,
+				42B8BF7D3F9C13606B30BD96 /* PhotoPreset.swift in Sources */,
+				FEBA36398E809C8BB389843A /* PhotoRenderer.swift in Sources */,
+				CE34C5B81D83D4DF6BB87ACE /* EditorModel.swift in Sources */,
+				0E7F3DBA4BED6E571797EDEA /* EditorView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C58B1D22E6B06406536A4294 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C13732C8E715C9BEE4FA51C9 /* Flickerly */;
+			targetProxy = E9CA66683FF22D7B8CC65928 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		5A8C91857F674E16E2724F47 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5CPM5925FS;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Flickerly/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Flickerly;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Flickerly needs permission to save edited copies of your photos to your library.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = gr.mountzou.flickerly;
+				PRODUCT_NAME = Flickerly;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		89E1FD6268CC0F221A2BE178 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		942EEBBACD6C88CAE7F29B29 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = gr.mountzou.flickerly.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Flickerly.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Flickerly";
+			};
+			name = Release;
+		};
+		E6DE6C99132752C914FEF632 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E9B2E96ABC5F6856F2BE79CF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5CPM5925FS;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Flickerly/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Flickerly;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Flickerly needs permission to save edited copies of your photos to your library.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = gr.mountzou.flickerly;
+				PRODUCT_NAME = Flickerly;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FCB48D8F88BCDB0ED9FADFD7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = gr.mountzou.flickerly.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Flickerly.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Flickerly";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		41A2CC2D5321B7BB2E956CA5 /* Build configuration list for PBXProject "Flickerly" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				89E1FD6268CC0F221A2BE178 /* Debug */,
+				E6DE6C99132752C914FEF632 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A296CF4B7E708AB4E80076A9 /* Build configuration list for PBXNativeTarget "Flickerly" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E9B2E96ABC5F6856F2BE79CF /* Debug */,
+				5A8C91857F674E16E2724F47 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BBD1A4309DD6635F34F23AFF /* Build configuration list for PBXNativeTarget "FlickerlyTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FCB48D8F88BCDB0ED9FADFD7 /* Debug */,
+				942EEBBACD6C88CAE7F29B29 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+}

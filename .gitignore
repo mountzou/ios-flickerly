@@ -1,0 +1,37 @@
+# macOS and Xcode local state
+.DS_Store
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+
+# Local builds, test output, experiments and release evidence
+/build/
+DerivedData/
+/TestResults/
+/artifacts/
+*.xcresult/
+*.xcarchive/
+*.ipa
+*.dSYM/
+*.dSYM.zip
+*.log
+
+# Python environments and caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Credentials, environment overrides and signing material
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*.pfx
+*.pem
+*.key
+*.mobileprovision
+*.provisionprofile
