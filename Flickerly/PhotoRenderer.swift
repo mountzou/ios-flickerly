@@ -1,6 +1,7 @@
 import CoreImage
 import CoreImage.CIFilterBuiltins
 import ImageIO
+import UniformTypeIdentifiers
 
 /// Fixed styles sampled from upstream and Flickerly-trained NILUT networks. The app's working
 /// space is linear sRGB; the network's lookup coordinates and values are sRGB.
@@ -89,6 +90,72 @@ protocol PhotoRendering: Sendable {
     func prepare(data: Data) async throws -> PreparedPhoto
     func blend(photo: PreparedPhoto, preset: PhotoPreset, intensity: Double) async throws -> CGImage
     func export(photo: PreparedPhoto, preset: PhotoPreset, intensity: Double) async throws -> URL
+}
+
+enum ExportSize: String, CaseIterable, Sendable {
+    case original, medium, small
+
+    var title: String {
+        switch self {
+        case .original: "Original size"
+        case .medium: "Medium size"
+        case .small: "Small size"
+        }
+    }
+
+    var maxDimension: Int? {
+        switch self {
+        case .original: nil
+        case .medium: 2048
+        case .small: 1024
+        }
+    }
+}
+
+struct ExportOption: Identifiable, Sendable {
+    let size: ExportSize
+    let url: URL
+    let bytes: Int64
+    var id: String { size.rawValue }
+}
+
+extension PhotoRendering {
+    func exportOptions(photo: PreparedPhoto, preset: PhotoPreset, intensity: Double) async throws -> [ExportOption] {
+        var files: [URL] = []
+        do {
+            let original = try await export(photo: photo, preset: preset, intensity: intensity)
+            files.append(original)
+            try Task.checkCancellation()
+            guard let source = CGImageSourceCreateWithURL(original as CFURL, nil) else { throw PhotoError.exportFailed }
+            var options: [ExportOption] = []
+            for size in ExportSize.allCases {
+                try Task.checkCancellation()
+                let url: URL
+                if let maxDimension = size.maxDimension {
+                    guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                        kCGImageSourceCreateThumbnailFromImageAlways: true,
+                        kCGImageSourceThumbnailMaxPixelSize: maxDimension,
+                        kCGImageSourceCreateThumbnailWithTransform: true
+                    ] as CFDictionary) else { throw PhotoError.exportFailed }
+                    url = FileManager.default.temporaryDirectory.appendingPathComponent("Flickerly-\(preset.name)-\(UUID().uuidString).jpg")
+                    files.append(url)
+                    guard let destination = CGImageDestinationCreateWithURL(url as CFURL, UTType.jpeg.identifier as CFString, 1, nil) else { throw PhotoError.exportFailed }
+                    CGImageDestinationAddImage(destination, image, [kCGImageDestinationLossyCompressionQuality: 0.95] as CFDictionary)
+                    guard CGImageDestinationFinalize(destination) else { throw PhotoError.exportFailed }
+                } else {
+                    url = original
+                }
+                let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+                guard let bytes = (attributes[.size] as? NSNumber)?.int64Value else { throw PhotoError.exportFailed }
+                options.append(ExportOption(size: size, url: url, bytes: bytes))
+            }
+            try Task.checkCancellation()
+            return options
+        } catch {
+            for url in files { try? FileManager.default.removeItem(at: url) }
+            throw error
+        }
+    }
 }
 
 /// All decoding and Core Image work runs away from the main actor.

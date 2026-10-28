@@ -54,6 +54,8 @@ final class EditorModel: ObservableObject {
     @Published private(set) var isImporting = false
     @Published private(set) var isRendering = false
     @Published private(set) var isSaving = false
+    @Published private(set) var isPreparingExport = false
+    @Published private(set) var exportOptions: [ExportOption] = []
     @Published var notice: EditorNotice?
 
     @Published var selectedPreset: PhotoPreset = .amber {
@@ -81,6 +83,8 @@ final class EditorModel: ObservableObject {
     private var importTask: Task<Void, Never>?
     private var renderTask: Task<Void, Never>?
     private var saveTask: Task<Void, Never>?
+    private var exportTask: Task<Void, Never>?
+    private var exportRequestID: UUID?
     private var lastPresetByFamily: [PhotoPresetFamily: PhotoPreset] = [.originals: .amber]
 
     init(
@@ -150,25 +154,62 @@ final class EditorModel: ObservableObject {
         intensity = 0.8
     }
 
-    func savePhoto() {
+    func prepareExportOptions() {
         guard let photo, !isImporting, !isSaving else { return }
-        // Freeze the edit that the user tapped Save on, even if rendering is pending.
+        cancelExportOptions()
         let preset = selectedPreset
         let amount = intensity
+        let requestID = UUID()
+        exportRequestID = requestID
+        isPreparingExport = true
+        exportTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let options = try await renderer.exportOptions(photo: photo, preset: preset, intensity: amount)
+                guard !Task.isCancelled, exportRequestID == requestID else {
+                    for option in options { try? FileManager.default.removeItem(at: option.url) }
+                    return
+                }
+                exportOptions = options
+                isPreparingExport = false
+            } catch is CancellationError {
+                return
+            } catch {
+                guard exportRequestID == requestID else { return }
+                isPreparingExport = false
+                showError(error)
+            }
+        }
+    }
+
+    func cancelExportOptions() {
+        exportTask?.cancel()
+        exportTask = nil
+        exportRequestID = nil
+        isPreparingExport = false
+        for option in exportOptions { try? FileManager.default.removeItem(at: option.url) }
+        exportOptions = []
+    }
+
+    func savePhoto(_ option: ExportOption) {
+        guard exportOptions.contains(where: { $0.url == option.url }), !isSaving else { return }
+        exportOptions.removeAll { $0.url == option.url }
+        cancelExportOptions()
         isSaving = true
         notice = nil
 
         saveTask = Task { [weak self] in
             guard let self else { return }
-            defer { isSaving = false }
+            defer {
+                try? FileManager.default.removeItem(at: option.url)
+                isSaving = false
+            }
             do {
                 try await PhotoLibraryWriter.requestAddAccess()
-                let url = try await renderer.export(photo: photo, preset: preset, intensity: amount)
-                defer { try? FileManager.default.removeItem(at: url) }
-                try await PhotoLibraryWriter.save(fileURL: url)
+                try await PhotoLibraryWriter.save(fileURL: option.url)
                 notice = EditorNotice(
                     title: "Saved",
-                    message: "A new copy was saved to Photos at its original resolution."
+                    message: "A new copy was saved to Photos."
                 )
             } catch {
                 showError(error)
