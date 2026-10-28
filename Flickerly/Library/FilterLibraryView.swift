@@ -1,5 +1,10 @@
 import SwiftUI
 
+private struct EditorDestination: Hashable {
+    let preset: PhotoPreset
+    let isBlackAndWhite: Bool
+}
+
 struct FilterLibraryView: View {
     @EnvironmentObject private var favorites: FavoritesStore
     @EnvironmentObject private var previews: CatalogPreviewStore
@@ -14,6 +19,12 @@ struct FilterLibraryView: View {
                             title: family.name, caption: family.caption,
                             presets: family.presets, section: family.rawValue
                         )
+                        if family == .originals {
+                            collection(
+                                title: "Black and white", caption: "Timeless looks in black and white",
+                                presets: PhotoPreset.blackAndWhite, section: "black-and-white"
+                            )
+                        }
                     }
                 }
                 .padding(.bottom, 32)
@@ -31,8 +42,8 @@ struct FilterLibraryView: View {
                     .frame(maxWidth: .infinity)
                     .background(Palette.background)
             }
-            .navigationDestination(for: PhotoPreset.self) { preset in
-                EditorView(initialPreset: preset)
+            .navigationDestination(for: EditorDestination.self) { destination in
+                EditorView(initialPreset: destination.preset, isBlackAndWhite: destination.isBlackAndWhite)
                     .navigationBarBackButtonHidden()
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -74,14 +85,13 @@ struct FilterLibraryView: View {
                         .font(AppTypography.font(size: 18, weight: .medium))
                         .frame(width: 46, height: 46)
                         .background(Palette.surface, in: Circle())
-                        .overlay(Circle().strokeBorder(Palette.muted.opacity(0.2)))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Settings")
                 .accessibilityIdentifier("openSettings")
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text("Explore a collection. Make it yours.")
+            Text("Find your look. Make it yours.")
                 .font(AppTypography.font(size: 13))
                 .foregroundStyle(Palette.muted)
             if previews.failed {
@@ -97,7 +107,7 @@ struct FilterLibraryView: View {
     @ViewBuilder private var favoritesSection: some View {
         if favorites.presets.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
-                sectionHeading("Favorites", caption: "Your saved looks", count: 0)
+                sectionHeading("Favorites", caption: "Your favorite looks, all in one place", count: 0)
                 HStack(spacing: 14) {
                     Image(systemName: "bookmark")
                         .font(AppTypography.font(size: 22))
@@ -117,7 +127,7 @@ struct FilterLibraryView: View {
             }
             .accessibilityIdentifier("emptyFavorites")
         } else {
-            collection(title: "Favorites", caption: "Your saved looks",
+            collection(title: "Favorites", caption: "Your favorite looks, all in one place",
                        presets: favorites.orderedPresets, section: "favorites")
         }
     }
@@ -145,7 +155,7 @@ struct FilterLibraryView: View {
                 Text(title)
                     .font(AppTypography.font(size: 22, weight: .semibold))
                     .accessibilityAddTraits(.isHeader)
-                Text(caption)
+                Text("\(caption).")
                     .font(AppTypography.font(size: 12))
                     .foregroundStyle(Palette.muted)
             }
@@ -158,7 +168,7 @@ struct FilterLibraryView: View {
     }
 
     private func catalogCard(_ preset: PhotoPreset, section: String) -> some View {
-        NavigationLink(value: preset) {
+        NavigationLink(value: EditorDestination(preset: preset, isBlackAndWhite: section == "black-and-white")) {
             VStack(alignment: .leading, spacing: 9) {
                 ZStack(alignment: .bottomLeading) {
                     RoundedRectangle(cornerRadius: 9).fill(Palette.surface)
@@ -173,11 +183,6 @@ struct FilterLibraryView: View {
                             .foregroundStyle(Palette.muted)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
-                    Text(preset.code)
-                        .font(AppTypography.font(size: 10, weight: .medium))
-                        .foregroundStyle(.white)
-                        .padding(8)
-                        .background(.black.opacity(0.65), in: UnevenRoundedRectangle(topTrailingRadius: 9))
                 }
                 .frame(width: 164, height: 180)
                 .clipShape(RoundedRectangle(cornerRadius: 9))

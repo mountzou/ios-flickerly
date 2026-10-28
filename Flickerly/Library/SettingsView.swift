@@ -13,14 +13,13 @@ struct SettingsView: View {
                         .font(AppTypography.font(size: 18, weight: .medium))
                         .frame(width: 46, height: 46)
                         .background(Palette.surface, in: Circle())
-                        .overlay(Circle().strokeBorder(Palette.muted.opacity(0.2)))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Back to collections")
                 .accessibilityIdentifier("backFromSettings")
 
                 Text("Settings")
-                    .font(AppTypography.font(size: 18))
+                    .font(AppTypography.font(size: 18, weight: .semibold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.65)
                     .frame(maxWidth: .infinity)
@@ -60,7 +59,7 @@ struct SettingsView: View {
     private var versionFooter: some View {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
         return Text("Version \(version)")
-            .font(AppTypography.font(size: 12))
+            .font(.system(size: 12, design: .monospaced))
             .foregroundStyle(Palette.muted)
             .padding(.horizontal, 24)
             .padding(.top, 12)

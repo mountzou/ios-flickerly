@@ -18,6 +18,39 @@ private struct NILUTReference: Decodable {
 
 @MainActor
 final class PhotoRendererTests: XCTestCase {
+    func testExportOptionsContainActualFileSizesAndBoundedDimensions() async throws {
+        let renderer = PhotoRenderer(maxPreviewDimension: 120)
+        let photo = try await renderer.prepare(data: fixtureData(width: 2400, height: 1200))
+        let options = try await renderer.exportOptions(photo: photo, preset: .mono, intensity: 0.8)
+        defer { for option in options { try? FileManager.default.removeItem(at: option.url) } }
+        XCTAssertEqual(options.map(\.size), [.original, .medium, .small])
+        for (option, expectedWidth) in zip(options, [2400, 2048, 1024]) {
+            let image = try exportedImage(option.url)
+            XCTAssertEqual(image.width, expectedWidth)
+            XCTAssertEqual(image.height, expectedWidth / 2)
+            let attributes = try FileManager.default.attributesOfItem(atPath: option.url.path)
+            XCTAssertEqual(option.bytes, (attributes[.size] as? NSNumber)?.int64Value)
+        }
+    }
+
+    func testCancellingExportOptionsRemovesPreparedFiles() async throws {
+        let model = EditorModel(renderer: PhotoRenderer(maxPreviewDimension: 120))
+        model.importPhoto(data: try fixtureData(width: 200, height: 100))
+        try await waitUntil { !model.isImporting }
+        model.prepareExportOptions()
+        try await waitUntil { !model.isPreparingExport }
+        let options = model.exportOptions
+        XCTAssertEqual(options.count, 3)
+        for option in options {
+            let image = try exportedImage(option.url)
+            XCTAssertEqual(image.width, 200)
+            XCTAssertEqual(image.height, 100)
+        }
+        model.cancelExportOptions()
+        XCTAssertTrue(model.exportOptions.isEmpty)
+        for option in options { XCTAssertFalse(FileManager.default.fileExists(atPath: option.url.path)) }
+    }
+
     func testFlickerlyReleaseIdentity() throws {
         XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String, "Flickerly")
         XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "CFBundleExecutable") as? String, "Flickerly")

@@ -15,9 +15,9 @@ enum PhotoPresetFamily: String, CaseIterable, Identifiable, Sendable {
     }
     var caption: String {
         switch self {
-        case .originals: "Color, grain & film wear"
-        case .paper: "Matte prints · P1–P3"
-        case .nilut: "Six color looks · N1–N6"
+        case .originals: "Film-inspired looks"
+        case .paper: "Soft tones with a printed feel"
+        case .nilut: "Colorful looks for a fresh perspective"
         }
     }
     var presets: [PhotoPreset] { PhotoPreset.allCases.filter { $0.family == self } }
@@ -46,6 +46,8 @@ enum NILUTStyle: Int, CaseIterable, Sendable {
 }
 
 enum PhotoPreset: String, CaseIterable, Identifiable, Sendable {
+    static let blackAndWhite: [PhotoPreset] = [.mono, .silver35, .scratch16, .paperArchive]
+
     case amber
     case tide
     case mono

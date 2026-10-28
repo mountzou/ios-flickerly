@@ -6,11 +6,14 @@ struct EditorView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var previews: CatalogPreviewStore
     @StateObject private var model: EditorModel
+    private let isBlackAndWhite: Bool
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var showsOriginal = false
     @State private var showsPhotoDetail = false
+    @State private var showsExportSizes = false
 
-    init(initialPreset: PhotoPreset = .amber) {
+    init(initialPreset: PhotoPreset = .amber, isBlackAndWhite: Bool = false) {
+        self.isBlackAndWhite = isBlackAndWhite
         _model = StateObject(wrappedValue: EditorModel(initialPreset: initialPreset))
     }
 
@@ -23,9 +26,6 @@ struct EditorView: View {
             )
             ScrollView {
                 VStack(spacing: 0) {
-                    header
-                        .padding(.bottom, 22)
-
                     photoCanvas(size: canvasSize)
                         .frame(maxWidth: .infinity)
                         .padding(.horizontal, model.hasPhoto ? -16 : 0)
@@ -38,11 +38,19 @@ struct EditorView: View {
                 }
                 .frame(maxWidth: 620)
                 .padding(.horizontal, 24)
-                .padding(.top, 20)
                 .padding(.bottom, 28)
                 .frame(width: geometry.size.width)
             }
             .scrollIndicators(.hidden)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                header
+                    .frame(maxWidth: 620)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 20)
+                    .padding(.bottom, 22)
+                    .frame(maxWidth: .infinity)
+                    .background(Palette.background)
+            }
         }
         .background(Palette.background)
         .foregroundStyle(Palette.ink)
@@ -60,6 +68,12 @@ struct EditorView: View {
                     showsOriginal: showsOriginal
                 )
             }
+        }
+        .sheet(isPresented: $showsExportSizes, onDismiss: { model.cancelExportOptions() }) {
+            exportSizeSheet
+        }
+        .onChange(of: model.notice != nil) { _, hasNotice in
+            if hasNotice { showsExportSizes = false }
         }
         .onChange(of: selectedPhoto) { _, selection in
             guard let selection else { return }
@@ -88,16 +102,14 @@ struct EditorView: View {
                     .font(importFont)
                     .frame(width: 46, height: 46)
                     .background(Palette.surface, in: Circle())
-                    .overlay(Circle().strokeBorder(Palette.muted.opacity(0.2)))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Back to collections")
             .accessibilityIdentifier("backToCollections")
             .disabled(model.isImporting || model.isSaving)
 
-            Text("FLICKERLY")
-                .font(AppTypography.font(size: 25, weight: .semibold))
-                .tracking(5)
+            Text("Edit your photo")
+                .font(AppTypography.font(size: 18, weight: .semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
                 .frame(maxWidth: .infinity)
@@ -108,7 +120,6 @@ struct EditorView: View {
                         .font(importFont)
                         .frame(width: 46, height: 46)
                         .background(Palette.surface, in: Circle())
-                        .overlay(Circle().strokeBorder(Palette.muted.opacity(0.2)))
                 }
                 .accessibilityLabel("Change photo")
                 .accessibilityIdentifier("importPhoto")
@@ -290,18 +301,22 @@ struct EditorView: View {
     }
 
     private var presetSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionLabel(model.selectedFamily.name.uppercased(), detail: "\(model.selectedFamily.presets.count) filters")
-
-            Text(model.selectedFamily.caption)
-                .font(AppTypography.font(size: 11))
-                .foregroundStyle(Palette.muted)
-                .accessibilityIdentifier("familyDescription")
+        let presets = isBlackAndWhite ? PhotoPreset.blackAndWhite : model.selectedFamily.presets
+        let name = isBlackAndWhite ? "Black and white" : model.selectedFamily.name
+        let caption = isBlackAndWhite ? "Timeless looks in black and white" : model.selectedFamily.caption
+        return VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 5) {
+                sectionLabel(name.uppercased(), detail: "\(presets.count) filters")
+                Text(caption)
+                    .font(AppTypography.font(size: 11))
+                    .foregroundStyle(Palette.muted)
+                    .accessibilityIdentifier("familyDescription")
+            }
 
             ScrollViewReader { scroll in
                 ScrollView(.horizontal) {
                     HStack(alignment: .top, spacing: 12) {
-                        ForEach(model.selectedFamily.presets) { preset in
+                        ForEach(presets) { preset in
                             presetCard(preset)
                                 .frame(width: 100)
                                 .id(preset.id)
@@ -316,7 +331,7 @@ struct EditorView: View {
                     scroll.scrollTo(preset.id, anchor: .center)
                 }
             }
-            .id(model.selectedFamily)
+            .id(name)
         }
     }
 
@@ -343,11 +358,6 @@ struct EditorView: View {
                                 .foregroundStyle(Palette.muted)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
-                        Text(preset.code)
-                            .font(AppTypography.font(size: 9, weight: .medium))
-                            .foregroundStyle(.white)
-                            .padding(7)
-                            .background(.black.opacity(0.35), in: UnevenRoundedRectangle(topTrailingRadius: 4))
                     }
                 }
                 .frame(height: 92)
@@ -377,7 +387,7 @@ struct EditorView: View {
         }
         .buttonStyle(.plain)
         .disabled(model.isImporting || model.isSaving)
-        .accessibilityLabel("\(preset.code), \(preset.name), \(preset.caption)")
+        .accessibilityLabel("\(preset.name), \(preset.caption)")
         .accessibilityAddTraits(selected ? .isSelected : [])
         .accessibilityIdentifier("preset-\(preset.rawValue)")
         .overlay(alignment: .topTrailing) {
@@ -409,12 +419,6 @@ struct EditorView: View {
             HStack {
                 Text("Original")
                 Spacer()
-                Button("Reset") {
-                    showsOriginal = false
-                    model.resetIntensity()
-                }
-                .accessibilityIdentifier("resetIntensity")
-                Spacer()
                 Text("Full look")
             }
             .font(AppTypography.font(size: 10))
@@ -426,7 +430,8 @@ struct EditorView: View {
 
     private var saveBar: some View {
         Button {
-            model.savePhoto()
+            model.prepareExportOptions()
+            showsExportSizes = true
         } label: {
             HStack(spacing: 12) {
                 if model.isSaving {
@@ -438,7 +443,7 @@ struct EditorView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(model.isSaving ? "Saving…" : "Save a copy")
                         .font(AppTypography.font(size: 13, weight: .semibold))
-                    Text("Original resolution")
+                    Text("Choose image size")
                         .font(AppTypography.font(size: 10))
                         .opacity(0.7)
                 }
@@ -453,7 +458,7 @@ struct EditorView: View {
         .buttonStyle(.plain)
         .disabled(model.isImporting || model.isSaving)
         .accessibilityLabel(model.isSaving ? "Saving photo" : "Save edited photo")
-        .accessibilityValue("Original resolution")
+        .accessibilityValue("Choose image size")
         .accessibilityIdentifier("savePhoto")
         .frame(maxWidth: 620)
         .padding(.horizontal, 24)
@@ -461,6 +466,50 @@ struct EditorView: View {
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity)
         .background(Palette.background)
+    }
+
+    private var exportSizeSheet: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Choose image size")
+                .font(AppTypography.font(size: 22, weight: .semibold))
+                .accessibilityAddTraits(.isHeader)
+            if model.isPreparingExport {
+                HStack(spacing: 12) {
+                    ProgressView()
+                    Text("Calculating sizes…")
+                        .font(AppTypography.font(size: 14))
+                }
+                .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
+            } else {
+                ForEach(model.exportOptions) { option in
+                    Button {
+                        model.savePhoto(option)
+                        showsExportSizes = false
+                    } label: {
+                        HStack {
+                            Text(option.size.title)
+                            Spacer()
+                            Text(option.bytes < 10_000 ? "(<0.01 MB)" : String(format: "(%.2f MB)", Double(option.bytes) / 1_000_000))
+                                .monospacedDigit()
+                        }
+                        .font(AppTypography.font(size: 15, weight: .medium))
+                        .padding(16)
+                        .frame(maxWidth: .infinity, minHeight: 52)
+                        .background(Palette.surface, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("exportSize-\(option.id)")
+                }
+            }
+        }
+        .padding(24)
+        .padding(.top, 12)
+        .frame(maxWidth: 620)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .foregroundStyle(Palette.ink)
+        .background(Palette.background.ignoresSafeArea())
+        .presentationDetents([.height(350), .large])
+        .presentationDragIndicator(.visible)
     }
 
     private func sectionLabel(_ title: String, detail: String) -> some View {
@@ -510,12 +559,15 @@ struct EditorNoticeView: View {
                             .frame(maxWidth: .infinity, minHeight: 44)
                             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Palette.muted))
                     }
-                    Button("OK", action: dismiss)
-                        .font(AppTypography.font(size: 14, weight: .semibold))
-                        .foregroundStyle(Palette.background)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .background(Palette.accent, in: RoundedRectangle(cornerRadius: 10))
-                        .accessibilityIdentifier("dismissNotice")
+                    Button(action: dismiss) {
+                        Text("OK")
+                            .font(AppTypography.font(size: 14, weight: .semibold))
+                            .foregroundStyle(Palette.background)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .background(Palette.accent, in: RoundedRectangle(cornerRadius: 10))
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityIdentifier("dismissNotice")
                 }
                 .buttonStyle(.plain)
             }

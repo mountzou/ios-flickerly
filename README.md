@@ -30,12 +30,13 @@ version and installed build were not recorded.
 
 App Store release preparation is recorded in
 [`artifacts/app-store/release-1.0.0-1/README.md`](artifacts/app-store/release-1.0.0-1/README.md).
-The project is now version **1.0.0 (1)**; its signed build has been uploaded to
-the Flickerly App Store Connect record (**6826854864**). Metadata and seven screenshot
-files are uploaded. Version **1.0.0 (1)** was submitted on October 25, 2026, with
-manual release selected. Submission ID: `496fc6d3-459d-43fd-854f-615535ee18cf`.
-On October 28, 2026, the owner confirmed that Apple approved the app and it is
-available on the [App Store](https://apps.apple.com/app/id6826854864).
+Version **1.0.0 (1)** was submitted on October 25, 2026. On October 28, the
+owner confirmed that Apple approved it and the app was available on the
+[App Store](https://apps.apple.com/app/id6826854864).
+
+Version **1.0.1 (2)** was submitted on October 28, 2026, with automatic release
+selected. Submission ID: `78423a3e-e1d8-40e1-88d9-8607fe66eb8b`. The owner
+subsequently confirmed that the new version is live.
 
 ## Repository and local artifacts
 
@@ -103,12 +104,12 @@ evidence is in `artifacts/app-store/public-links-and-identity/`.
 
 The approved Grain app icon is black on white, with dark and tinted variants. The editable vector, SVG/PDF exports, PNG sizes, legacy catalog and web assets are in [Branding/Flickerly](Branding/Flickerly/README.md). Regenerate or verify them with `scripts/generate_app_icons.py` (`--check` verifies saved files). The active Xcode icon catalog is `Flickerly/Catalog/Assets.xcassets/AppIcon.appiconset`.
 
-1. Browse **Originals**, **Paper** and **NILUT** on the home screen. Each collection has a horizontal row of real filtered previews of the same bundled sample photograph at 100%.
-2. Tap a card to open its editor with that exact look selected. The editor offers the other looks in that family. Use the back arrow to browse another collection.
+1. Browse **Originals**, **Black and white**, **Paper** and **NILUT** on the home screen. Each collection has a horizontal row of real filtered previews of the same bundled sample photograph at 100%. Black and white groups four existing looks from Originals and Paper.
+2. Tap a card to open its editor with that exact look selected. The editor offers the other looks in the selected collection. Use the back arrow to browse another collection.
 3. Tap **Choose photo** to import your own photo. After import, the **+** appears in the header to choose another photo. The selected look is preserved, with the existing default intensity of 80%. Before import, the sample shows the full-strength look and saving/intensity are unavailable.
-4. Adjust **Intensity** from 0% (original) to 100% (full preset). The **Before / After** button inside the bottom left of the photo toggles the original; changing a look or intensity returns to the edit. **Reset** restores 80%.
+4. Adjust **Intensity** from 0% (original) to 100% (full preset). The **Before / After** button inside the bottom left of the photo toggles the original; changing a look or intensity returns to the edit.
 5. Tap the **bookmark** at the top right of any filter thumbnail on the home screen or in the editor to add/remove a favorite. Bookmarking a filter does not select or apply it. The **Favorites** row updates immediately.
-6. Tap **Save a copy**. On the first save, allow Flickerly to add photos. A confirmation appears after the new image has been written to the library at its original resolution.
+6. Tap **Save a copy** and choose Original, Medium or Small after their JPEG sizes are calculated. On the first save, allow Flickerly to add photos. A confirmation appears after the selected image has been written to the library.
 
 ## Home, favorites and sample previews
 
@@ -122,7 +123,7 @@ The loaded-photo canvas follows the orientation-corrected image's aspect ratio, 
 
 ## Collections
 
-The home screen presents **Originals**, **Paper**, and **NILUT** in separate rows. Inside the editor, only the selected collection's preset cards appear, and the row brings the selected look into view. Selecting another look keeps intensity and returns to the edited image; importing a new photo preserves the selected collection/look/intensity.
+The home screen presents **Originals**, **Black and white**, **Paper**, and **NILUT** in separate rows. Inside the editor, the Black and white row keeps its four grouped looks; other cards open their original family. The row brings the selected look into view. Selecting another look keeps intensity and returns to the edited image; importing a new photo preserves the selected collection/look/intensity.
 
 The first family shares a paper relief field and fine-grain pattern:
 
@@ -249,11 +250,11 @@ N4–N6 use their own authored targets and checkpoint. See
 
 ## Prototype scope
 
-The editor creates an orientation-corrected **SDR sRGB preview capped at 1,800 pixels on its longest side**. Pixel dimensions are not displayed in the user interface; exports retain the source resolution. Cached looks keep slider updates lightweight. The photo remains local; the system picker may download an iCloud asset before returning it.
+The editor creates an orientation-corrected **SDR sRGB preview capped at 1,800 pixels on its longest side**. Cached looks keep slider updates lightweight. The photo remains local; the system picker may download an iCloud asset before returning it.
 
 Slider changes update one pending slot. A single preview worker renders at a target cadence of up to 60 updates per second, always taking the newest pending value. It publishes completed frames while input continues, then processes the latest waiting value. It does not cancel/restart on each slider event. Importing another photo invalidates the old worker, so old frames cannot overwrite the new photo. There is no spinner for slider updates; loading and saving keep their progress indicators. The current display path still uses `CGImage`/`UIImage`; direct Metal display can be evaluated after physical-device profiling if further improvement is needed.
 
-Saving renders again from the retained compressed source at its **original pixel dimensions**, using the selected preset and intensity. The app writes a **95%-quality JPEG in SDR sRGB**, validates the encoded dimensions, and then imports it into Photos as a new asset. Source orientation is baked into the pixels (portrait dimensions are correctly swapped), and temporary export files are removed after PhotoKit finishes. Transparent pixels are composited over white in both preview and export. Source location/capture metadata is not copied; the new asset has its save date.
+Saving renders again from the retained compressed source at its **original pixel dimensions**, using the selected preset and intensity. The app prepares a **95%-quality JPEG in SDR sRGB**, then derives Medium and Small versions capped at 2048 and 1024 pixels on their longest side without upscaling. The size picker shows the actual byte size of each prepared file. The chosen JPEG is imported into Photos as a new asset. Source orientation is baked into the pixels (portrait dimensions are correctly swapped), and temporary export files are removed on cancellation or after PhotoKit finishes. Transparent pixels are composited over white in both preview and export. Source location/capture metadata is not copied; the new asset has its save date.
 
 Only the first save requests **add-only** access to Photos via `NSPhotoLibraryAddUsageDescription`; the system picker still does not require read access. Denied access shows a Settings action, and restricted access or write failures show an error. Controls are disabled during saving, and success is shown only after PhotoKit completes. The original library asset is never modified.
 
