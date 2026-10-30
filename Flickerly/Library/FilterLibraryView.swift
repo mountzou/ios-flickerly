@@ -21,7 +21,7 @@ struct FilterLibraryView: View {
                         )
                         if family == .originals {
                             collection(
-                                title: "Black and white", caption: "Timeless looks in black and white",
+                                title: "Black and white", caption: "Timeless filters in black and white",
                                 presets: PhotoPreset.blackAndWhite, section: "black-and-white"
                             )
                         }
@@ -79,6 +79,18 @@ struct FilterLibraryView: View {
                 Spacer(minLength: 8)
 
                 NavigationLink {
+                    DraftsView()
+                } label: {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(AppTypography.font(size: 18, weight: .medium))
+                        .frame(width: 46, height: 46)
+                        .background(Palette.surface, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Drafts")
+                .accessibilityIdentifier("openDrafts")
+
+                NavigationLink {
                     SettingsView()
                 } label: {
                     Image(systemName: "gearshape")
@@ -91,7 +103,7 @@ struct FilterLibraryView: View {
                 .accessibilityIdentifier("openSettings")
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text("Find your look. Make it yours.")
+            Text("Find your filter. Make it yours.")
                 .font(AppTypography.font(size: 13))
                 .foregroundStyle(Palette.muted)
             if previews.failed {
@@ -107,7 +119,7 @@ struct FilterLibraryView: View {
     @ViewBuilder private var favoritesSection: some View {
         if favorites.presets.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
-                sectionHeading("Favorites", caption: "Your favorite looks, all in one place", count: 0)
+                sectionHeading("Favorites", caption: "Your favorite filters, all in one place", count: 0)
                 HStack(spacing: 14) {
                     Image(systemName: "bookmark")
                         .font(AppTypography.font(size: 22))
@@ -115,7 +127,7 @@ struct FilterLibraryView: View {
                     VStack(alignment: .leading, spacing: 5) {
                         Text("Keep your favorites close.")
                             .font(AppTypography.font(size: 14, weight: .medium))
-                        Text("Tap a bookmark on any look to save it here.")
+                        Text("Tap a bookmark on any filter to save it here.")
                             .font(AppTypography.font(size: 12))
                             .foregroundStyle(Palette.muted)
                     }
@@ -127,7 +139,7 @@ struct FilterLibraryView: View {
             }
             .accessibilityIdentifier("emptyFavorites")
         } else {
-            collection(title: "Favorites", caption: "Your favorite looks, all in one place",
+            collection(title: "Favorites", caption: "Your favorite filters, all in one place",
                        presets: favorites.orderedPresets, section: "favorites")
         }
     }
@@ -160,7 +172,7 @@ struct FilterLibraryView: View {
                     .foregroundStyle(Palette.muted)
             }
             Spacer()
-            Text("\(count) \(count == 1 ? "look" : "looks")")
+            Text("\(count) \(count == 1 ? "filter" : "filters")")
                 .font(AppTypography.font(size: 11))
                 .foregroundStyle(Palette.muted)
         }

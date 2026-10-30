@@ -50,6 +50,8 @@ private enum PhotoLibraryWriter {
 @MainActor
 final class EditorModel: ObservableObject {
     @Published private(set) var photo: PreparedPhoto?
+    @Published private(set) var photoRevision = UUID()
+    @Published private(set) var lastEditedAt: Date?
     @Published private(set) var preview: UIImage?
     @Published private(set) var isImporting = false
     @Published private(set) var isRendering = false
@@ -61,12 +63,16 @@ final class EditorModel: ObservableObject {
     @Published var selectedPreset: PhotoPreset = .amber {
         didSet {
             lastPresetByFamily[selectedPreset.family] = selectedPreset
+            if photo != nil && !isImporting && selectedPreset != oldValue { lastEditedAt = Date() }
             scheduleRender()
         }
     }
 
     @Published var intensity: Double = 0.8 {
-        didSet { scheduleRender() }
+        didSet {
+            if photo != nil && !isImporting && intensity != oldValue { lastEditedAt = Date() }
+            scheduleRender()
+        }
     }
 
     private struct PreviewRequest {
@@ -101,6 +107,12 @@ final class EditorModel: ObservableObject {
     var hasPhoto: Bool { photo != nil }
     var selectedFamily: PhotoPresetFamily { selectedPreset.family }
 
+    func hasUnsavedChanges(comparedTo draft: PhotoDraft?) -> Bool {
+        guard hasPhoto else { return false }
+        guard let draft else { return true }
+        return selectedPreset.rawValue != draft.presetID || intensity != draft.intensity
+    }
+
     func selectFamily(_ family: PhotoPresetFamily) {
         guard !isImporting, !isSaving,
               let preset = lastPresetByFamily[family] ?? family.presets.first else { return }
@@ -116,11 +128,11 @@ final class EditorModel: ObservableObject {
         }
     }
 
-    func importPhoto(data: Data) {
-        startImport { data }
+    func importPhoto(data: Data, lastEditedAt: Date? = nil) {
+        startImport(lastEditedAt: lastEditedAt) { data }
     }
 
-    private func startImport(load: @escaping @MainActor () async throws -> Data) {
+    private func startImport(lastEditedAt restoredDate: Date? = nil, load: @escaping @MainActor () async throws -> Data) {
         guard !isSaving else { return }
         importTask?.cancel()
         cancelPreviewUpdates()
@@ -139,6 +151,8 @@ final class EditorModel: ObservableObject {
                 try Task.checkCancellation()
                 photo = prepared
                 preview = UIImage(cgImage: rendered)
+                lastEditedAt = restoredDate
+                photoRevision = UUID()
                 isImporting = false
             } catch is CancellationError {
                 // A newer selection owns the loading state and the preview.

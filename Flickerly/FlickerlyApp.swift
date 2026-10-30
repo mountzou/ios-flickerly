@@ -37,12 +37,14 @@ struct FlickerlyApp: App {
     @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .dark
     @StateObject private var favorites = FavoritesStore()
     @StateObject private var previews = CatalogPreviewStore()
+    @StateObject private var drafts = DraftStore()
 
     var body: some Scene {
         WindowGroup {
             FilterLibraryView()
                 .environmentObject(favorites)
                 .environmentObject(previews)
+                .environmentObject(drafts)
                 .font(AppTypography.font(size: 14))
                 .environment(\.locale, Locale(identifier: "en"))
                 .preferredColorScheme(theme.colorScheme)
