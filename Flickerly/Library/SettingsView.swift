@@ -34,8 +34,8 @@ struct SettingsView: View {
             .padding(.top, 20)
 
             ScrollView {
-                VStack(spacing: 16) {
-                    appearanceCard
+                VStack(spacing: 24) {
+                    appearanceSection
                     privacyPolicyCard
                 }
                 .frame(maxWidth: 620)
@@ -69,7 +69,7 @@ struct SettingsView: View {
             .accessibilityIdentifier("appVersion")
     }
 
-    private var appearanceCard: some View {
+    private var appearanceSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Appearance")
                 .font(AppTypography.font(size: 17, weight: .semibold))
@@ -97,8 +97,6 @@ struct SettingsView: View {
                 }
             }
         }
-        .padding(20)
-        .background(Palette.ink.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
     }
 
     private var privacyPolicyCard: some View {

@@ -4,7 +4,7 @@ The approved Grain symbol, faithfully traced from `source/selected-grain-referen
 
 ## Main icon
 
-Use `png/light/flickerly-light-1024.png` for the App Store: black symbol, pure white background, RGB PNG without alpha. The square artwork has no baked-in rounded outer corners; the operating system applies its icon mask. All sizes retain the approved proportions and margins.
+Use `AppIcon.appiconset/AppIcon-Light-1024.png` for the App Store: black symbol, pure white background, RGB PNG without alpha. The app icon scales the vector symbol to 90% around the center to provide more space within the square; the general branding exports keep their original proportions. The square artwork has no baked-in rounded outer corners; the operating system applies its icon mask.
 
 ## Variants and formats
 
@@ -26,9 +26,9 @@ Use `png/light/flickerly-light-1024.png` for the App Store: black symbol, pure w
 
 ## App integration
 
-The active catalog is `Flickerly/Catalog/Assets.xcassets`, inside the project's existing synchronized resource folder. The primary icon setting is **AppIcon** in Debug and Release. The bundle identifier is unchanged. The additional `FlickerlyMark` imageset is a recolorable, resolution-preserving vector PDF for future in-app use.
+The app uses `Flickerly/Catalog/AppIcon.icon`, an editable Icon Composer document inside the project's synchronized resource folder. Its default symbol is dark gray (`#292929`); the dark and tinted appearances use a light symbol. The primary icon setting is **AppIcon** in Debug and Release. The PNG catalogs are separate exports and are not the app's active icon. The additional `FlickerlyMark` imageset is a recolorable, resolution-preserving vector PDF for future in-app use.
 
-The catalog follows Apple's [app icon configuration guidance](https://developer.apple.com/documentation/xcode/configuring-your-app-icon): a 1024-pixel single-size source, a transparent dark variant, and a grayscale tinted variant. This project uses asset catalogs rather than introducing an Icon Composer dependency.
+The standalone PNG catalog follows Apple's [app icon configuration guidance](https://developer.apple.com/documentation/xcode/configuring-your-app-icon): a 1024-pixel single-size source, a transparent dark variant, and a grayscale tinted variant.
 
 ## Regeneration
 

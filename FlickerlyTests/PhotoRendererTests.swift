@@ -18,6 +18,126 @@ private struct NILUTReference: Decodable {
 
 @MainActor
 final class PhotoRendererTests: XCTestCase {
+    func testDraftsPersistUpdateEnforceLimitAndDelete() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = DraftStore(directory: directory)
+        let source = Data([1, 2, 3, 4])
+        let id = try await store.save(id: nil, source: source, preset: .mono, intensity: 0.37,
+                                      isBlackAndWhite: true, thumbnail: Data([5]))
+        for _ in 1..<DraftStore.limit {
+            _ = try await store.save(id: nil, source: source, preset: .amber, intensity: 0.8,
+                                     isBlackAndWhite: false, thumbnail: Data())
+        }
+        do {
+            _ = try await store.save(id: nil, source: source, preset: .tide, intensity: 0.8,
+                                     isBlackAndWhite: false, thumbnail: Data())
+            XCTFail("A thirteenth draft must not replace an existing draft")
+        } catch DraftError.full {}
+        let newSource = Data([8, 9])
+        _ = try await store.save(id: id, source: newSource, preset: .paperWarm, intensity: 0.55,
+                                 isBlackAndWhite: false, thumbnail: Data([6]))
+        let reopened = DraftStore(directory: directory)
+        XCTAssertFalse(reopened.loadFailed)
+        XCTAssertEqual(reopened.drafts.count, 12)
+        let updated = try XCTUnwrap(reopened.drafts.first { $0.id == id })
+        XCTAssertEqual(updated.preset, .paperWarm)
+        XCTAssertEqual(updated.intensity, 0.55)
+        XCTAssertEqual(try reopened.source(for: updated), newSource)
+        try reopened.delete(updated)
+        XCTAssertEqual(DraftStore(directory: directory).drafts.count, 11)
+    }
+
+    func testInvalidDraftBlocksWritesWithoutDeletingExistingFiles() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let badFile = directory.appending(path: "broken.json")
+        try Data("invalid".utf8).write(to: badFile)
+        let store = DraftStore(directory: directory)
+        XCTAssertTrue(store.loadFailed)
+        do {
+            _ = try await store.save(id: nil, source: Data([1]), preset: .mono, intensity: 0.8,
+                                     isBlackAndWhite: false, thumbnail: Data())
+            XCTFail("Saving must not overwrite an unreadable collection")
+        } catch DraftError.unavailable {}
+        XCTAssertEqual(try Data(contentsOf: badFile), Data("invalid".utf8))
+    }
+
+    func testDraftSourceReopensWithSavedFilterAndIntensity() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let source = try fixtureData(width: 200, height: 100)
+        let store = DraftStore(directory: directory)
+        _ = try await store.save(id: nil, source: source, preset: .mono, intensity: 0.45,
+                                 isBlackAndWhite: true, thumbnail: Data())
+        let reopened = DraftStore(directory: directory)
+        let draft = try XCTUnwrap(reopened.drafts.first)
+        let renderer = PhotoRenderer(maxPreviewDimension: 120)
+        let model = EditorModel(renderer: renderer, initialPreset: try XCTUnwrap(draft.preset))
+        model.intensity = draft.intensity
+        model.importPhoto(data: try reopened.source(for: draft))
+        try await waitUntil { !model.isImporting }
+        let photo = try XCTUnwrap(model.photo)
+        let preview = try XCTUnwrap(model.preview?.cgImage)
+        let expected = try await renderer.blend(photo: photo, preset: .mono, intensity: 0.45)
+        XCTAssertEqual(photo.sourceData, source)
+        XCTAssertEqual(model.selectedPreset, .mono)
+        XCTAssertEqual(model.intensity, 0.45)
+        XCTAssertEqual(pixels(preview), pixels(expected))
+        XCTAssertTrue(draft.isBlackAndWhite)
+        XCTAssertFalse(model.hasUnsavedChanges(comparedTo: draft))
+        XCTAssertTrue(model.hasUnsavedChanges(comparedTo: nil))
+        model.intensity = 0.7
+        XCTAssertTrue(model.hasUnsavedChanges(comparedTo: draft))
+        model.intensity = draft.intensity
+        model.selectedPreset = .amber
+        XCTAssertTrue(model.hasUnsavedChanges(comparedTo: draft))
+        model.selectedPreset = .mono
+        XCTAssertFalse(model.hasUnsavedChanges(comparedTo: draft))
+    }
+
+    func testDraftLastEditedDateSurvivesReopeningAndChangesOnlyForEdits() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let source = try fixtureData()
+        let store = DraftStore(directory: directory)
+        let originalDate = Date(timeIntervalSince1970: 1_700_000_000)
+        let id = try await store.save(id: nil, source: source, preset: .mono, intensity: 0.45,
+                                      isBlackAndWhite: true, thumbnail: Data(), lastEditedAt: originalDate)
+        let draft = try XCTUnwrap(store.drafts.first)
+        let model = EditorModel(renderer: PhotoRenderer(maxPreviewDimension: 120), initialPreset: .mono)
+        model.intensity = draft.intensity
+        model.importPhoto(data: try store.source(for: draft), lastEditedAt: draft.updatedAt)
+        try await waitUntil { !model.isImporting && model.hasPhoto }
+        XCTAssertEqual(model.lastEditedAt, originalDate)
+        model.intensity = 0.45
+        XCTAssertEqual(model.lastEditedAt, originalDate)
+        _ = try await store.save(id: id, source: source, preset: .mono, intensity: 0.45,
+                                 isBlackAndWhite: true, thumbnail: Data(), lastEditedAt: model.lastEditedAt)
+        XCTAssertEqual(DraftStore(directory: directory).drafts.first?.updatedAt, originalDate)
+        model.intensity = 0.7
+        let editDate = try XCTUnwrap(model.lastEditedAt)
+        XCTAssertGreaterThan(editDate, originalDate)
+        _ = try await store.save(id: id, source: source, preset: .mono, intensity: 0.7,
+                                 isBlackAndWhite: true, thumbnail: Data(), lastEditedAt: editDate)
+        XCTAssertEqual(try XCTUnwrap(DraftStore(directory: directory).drafts.first).updatedAt.timeIntervalSince1970,
+                       editDate.timeIntervalSince1970, accuracy: 0.001)
+    }
+
+    func testNewUneditedDraftUsesSaveDate() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = DraftStore(directory: directory)
+        let before = Date()
+        _ = try await store.save(id: nil, source: Data([1]), preset: .amber, intensity: 0.8,
+                                 isBlackAndWhite: false, thumbnail: Data())
+        let after = Date()
+        let saved = try XCTUnwrap(DraftStore(directory: directory).drafts.first)
+        XCTAssertGreaterThanOrEqual(saved.updatedAt, before)
+        XCTAssertLessThanOrEqual(saved.updatedAt, after)
+    }
+
     func testExportOptionsContainActualFileSizesAndBoundedDimensions() async throws {
         let renderer = PhotoRenderer(maxPreviewDimension: 120)
         let photo = try await renderer.prepare(data: fixtureData(width: 2400, height: 1200))

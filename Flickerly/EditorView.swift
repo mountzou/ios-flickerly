@@ -5,16 +5,26 @@ struct EditorView: View {
     @Environment(\.openURL) private var openURL
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var previews: CatalogPreviewStore
+    @EnvironmentObject private var drafts: DraftStore
     @StateObject private var model: EditorModel
     private let isBlackAndWhite: Bool
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var showsOriginal = false
     @State private var showsPhotoDetail = false
     @State private var showsExportSizes = false
+    @State private var showsLeaveConfirmation = false
+    @State private var pendingPhoto: PhotosPickerItem?
+    @State private var draftID: UUID?
+    @State private var isRestoringDraft = false
+    @State private var showsDraftLimit = false
+    @State private var showsDraftManager = false
+    private let initialDraft: PhotoDraft?
 
-    init(initialPreset: PhotoPreset = .amber, isBlackAndWhite: Bool = false) {
+    init(initialPreset: PhotoPreset = .amber, isBlackAndWhite: Bool = false, draft: PhotoDraft? = nil) {
         self.isBlackAndWhite = isBlackAndWhite
-        _model = StateObject(wrappedValue: EditorModel(initialPreset: initialPreset))
+        self.initialDraft = draft
+        _draftID = State(initialValue: draft?.id)
+        _model = StateObject(wrappedValue: EditorModel(initialPreset: draft?.preset ?? initialPreset))
     }
 
     var body: some View {
@@ -55,7 +65,20 @@ struct EditorView: View {
         .background(Palette.background)
         .foregroundStyle(Palette.ink)
         .tint(Palette.accent)
+        .navigationBarBackButtonHidden()
+        .toolbar(.hidden, for: .navigationBar)
         .task { await previews.loadIfNeeded() }
+        .task {
+            guard let draft = initialDraft, !model.hasPhoto, !model.isImporting else { return }
+            do {
+                let source = try drafts.source(for: draft)
+                isRestoringDraft = true
+                model.intensity = draft.intensity
+                model.importPhoto(data: source, lastEditedAt: draft.updatedAt)
+            } catch {
+                model.notice = EditorNotice(title: "Couldn't open draft", message: "The draft is still in your collection. Please try again.")
+            }
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if model.hasPhoto { saveBar }
         }
@@ -65,25 +88,57 @@ struct EditorView: View {
                     editedImage: preview,
                     originalImage: UIImage(cgImage: photo.original),
                     presetName: model.selectedPreset.name,
-                    showsOriginal: showsOriginal
+                    showsOriginal: false
                 )
             }
         }
         .sheet(isPresented: $showsExportSizes, onDismiss: { model.cancelExportOptions() }) {
             exportSizeSheet
         }
+        .sheet(isPresented: $showsDraftManager) {
+            NavigationStack { DraftsView(allowsOpening: false) }
+        }
+        .alert("Drafts are full", isPresented: $showsDraftLimit) {
+            Button("Manage drafts") { showsDraftManager = true }
+            Button("Keep editing", role: .cancel) {}
+        } message: {
+            Text("You can keep up to 12 drafts. Delete one to make room, then save this edit as a draft.")
+        }
+        .confirmationDialog(pendingPhoto == nil ? "Leave editor?" : "Change photo?", isPresented: $showsLeaveConfirmation, titleVisibility: .visible) {
+            Button("Save draft") { Task { await saveDraftAndContinue() } }
+            Button("Discard changes", role: .destructive) { continueAfterDecision() }
+            Button("Keep editing") { pendingPhoto = nil }
+        } message: {
+            Text("Save this edit to Drafts to continue later. Discarding won't delete previously saved drafts or copies in Photos.")
+        }
         .onChange(of: model.notice != nil) { _, hasNotice in
             if hasNotice { showsExportSizes = false }
         }
         .onChange(of: selectedPhoto) { _, selection in
-            guard let selection else { return }
-            showsOriginal = false
-            model.importPhoto(selection)
+            guard let selection, initialDraft == nil else { return }
             selectedPhoto = nil
+            if model.hasPhoto {
+                pendingPhoto = selection
+                showsLeaveConfirmation = true
+            } else {
+                isRestoringDraft = false
+                model.importPhoto(selection)
+            }
         }
+        .onChange(of: model.photoRevision) { _, _ in
+            if isRestoringDraft { isRestoringDraft = false } else { draftID = nil }
+        }
+        .disabled(drafts.isSaving)
         .accessibilityHidden(model.notice != nil)
         .overlay {
-            if let notice = model.notice {
+            if drafts.isSaving {
+                ZStack {
+                    Color.black.opacity(0.45).ignoresSafeArea()
+                    ProgressView("Saving draft…")
+                        .padding(24)
+                        .background(Palette.background, in: RoundedRectangle(cornerRadius: 14))
+                }
+            } else if let notice = model.notice {
                 EditorNoticeView(notice: notice, dismiss: { model.notice = nil }) {
                     model.notice = nil
                     if let url = URL(string: UIApplication.openSettingsURLString) {
@@ -97,16 +152,26 @@ struct EditorView: View {
     private var header: some View {
         let importFont = AppTypography.font(size: 18, weight: .medium)
         return HStack(alignment: .center, spacing: 12) {
-            Button { dismiss() } label: {
+            Button {
+                let savedDraft = initialDraft.flatMap { initial in
+                    drafts.drafts.first { $0.id == initial.id }
+                }
+                if model.hasUnsavedChanges(comparedTo: savedDraft) {
+                    pendingPhoto = nil
+                    showsLeaveConfirmation = true
+                } else {
+                    dismiss()
+                }
+            } label: {
                 Image(systemName: "chevron.left")
                     .font(importFont)
                     .frame(width: 46, height: 46)
                     .background(Palette.surface, in: Circle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Back to collections")
+            .accessibilityLabel(initialDraft == nil ? "Back to collections" : "Back to drafts")
             .accessibilityIdentifier("backToCollections")
-            .disabled(model.isImporting || model.isSaving)
+            .disabled(model.isImporting || model.isSaving || drafts.isSaving)
 
             Text("Edit your photo")
                 .font(AppTypography.font(size: 18, weight: .semibold))
@@ -114,7 +179,7 @@ struct EditorView: View {
                 .minimumScaleFactor(0.65)
                 .frame(maxWidth: .infinity)
 
-            if model.hasPhoto {
+            if model.hasPhoto && initialDraft == nil {
                 PhotosPicker(selection: $selectedPhoto, matching: .images, preferredItemEncoding: .current) {
                     Image(systemName: "plus")
                         .font(importFont)
@@ -123,12 +188,45 @@ struct EditorView: View {
                 }
                 .accessibilityLabel("Change photo")
                 .accessibilityIdentifier("importPhoto")
-                .disabled(model.isImporting || model.isSaving)
+                .disabled(model.isImporting || model.isSaving || drafts.isSaving)
             } else {
                 Color.clear
                     .frame(width: 46, height: 46)
                     .accessibilityHidden(true)
             }
+        }
+    }
+
+    private func saveDraftAndContinue() async {
+        guard let photo = model.photo, let preview = model.preview else { return }
+        let ratio = min(1, 360 / max(preview.size.width, preview.size.height))
+        let size = CGSize(width: max(1, preview.size.width * ratio), height: max(1, preview.size.height * ratio))
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let thumbnail = UIGraphicsImageRenderer(size: size, format: format).image { _ in
+            preview.draw(in: CGRect(origin: .zero, size: size))
+        }.jpegData(compressionQuality: 0.8) ?? Data()
+        do {
+            draftID = try await drafts.save(id: draftID, source: photo.sourceData, preset: model.selectedPreset,
+                                            intensity: model.intensity, isBlackAndWhite: isBlackAndWhite,
+                                            thumbnail: thumbnail, lastEditedAt: model.lastEditedAt)
+            continueAfterDecision()
+        } catch DraftError.full {
+            pendingPhoto = nil
+            showsDraftLimit = true
+        } catch {
+            pendingPhoto = nil
+            model.notice = EditorNotice(title: "Couldn't save draft", message: (error as? LocalizedError)?.errorDescription ?? "Your edit is still open. Please try again.")
+        }
+    }
+
+    private func continueAfterDecision() {
+        if let selection = pendingPhoto {
+            pendingPhoto = nil
+            isRestoringDraft = false
+            model.importPhoto(selection)
+        } else {
+            dismiss()
         }
     }
 
@@ -153,7 +251,12 @@ struct EditorView: View {
                     .resizable()
                     .scaledToFit()
                     .accessibilityLabel(showsOriginal ? "Original photo" : "Photo with filter \(model.selectedPreset.name)")
+                    .accessibilityHint("Touch the photo to temporarily see the original. Use Enlarge photo for comparison controls.")
                     .accessibilityIdentifier("photoPreview")
+            } else if !model.isImporting && initialDraft != nil {
+                Text("Draft photo unavailable")
+                    .font(AppTypography.font(size: 14))
+                    .foregroundStyle(Palette.muted)
             } else if !model.isImporting {
                 if let sample = previews.images[model.selectedPreset] {
                     Image(decorative: sample, scale: 1)
@@ -192,28 +295,24 @@ struct EditorView: View {
         }
         .frame(width: size.width, height: size.height)
         .clipShape(RoundedRectangle(cornerRadius: 6))
-        .onTapGesture {
-            if model.hasPhoto && !model.isImporting && !model.isSaving {
-                showsPhotoDetail = true
+        .overlay {
+            if model.hasPhoto && !model.isImporting {
+                PhotoTouchObserver(enabled: !model.isSaving) { showsOriginal = $0 }
             }
         }
-        .overlay(alignment: .bottom) {
+        .overlay(alignment: .bottomTrailing) {
             if model.hasPhoto && !model.isImporting {
-                HStack(spacing: 8) {
-                    compareButton
-                    Spacer(minLength: 0)
-                    Button { showsPhotoDetail = true } label: {
-                        Image(systemName: "arrow.up.left.and.arrow.down.right")
-                            .font(AppTypography.font(size: 15, weight: .medium))
-                            .frame(width: 44, height: 44)
-                            .foregroundStyle(.white)
-                            .background(.black.opacity(0.72), in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Enlarge photo")
-                    .accessibilityIdentifier("enlargePhoto")
-                    .disabled(model.isSaving)
+                Button { showsPhotoDetail = true } label: {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(AppTypography.font(size: 15, weight: .medium))
+                        .frame(width: 44, height: 44)
+                        .foregroundStyle(.white)
+                        .background(.black.opacity(0.72), in: Circle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Enlarge photo")
+                .accessibilityIdentifier("enlargePhoto")
+                .disabled(model.isSaving)
                 .padding(12)
             }
         }
@@ -255,7 +354,7 @@ struct EditorView: View {
             VStack(spacing: 8) {
                 Text("Start with a photo.")
                     .font(AppTypography.font(size: 20, weight: .regular))
-                Text("Find your own look.")
+                Text("Find your own filter.")
                     .font(AppTypography.font(size: 12))
                     .foregroundStyle(Palette.muted)
             }
@@ -278,32 +377,10 @@ struct EditorView: View {
         .accessibilityIdentifier("chooseFirstPhoto")
     }
 
-    private var compareButton: some View {
-        Button {
-            showsOriginal.toggle()
-        } label: {
-            ViewThatFits(in: .horizontal) {
-                Label(showsOriginal ? "Edit" : "Before / After", systemImage: "square.lefthalf.filled")
-                    .fixedSize(horizontal: true, vertical: false)
-                Image(systemName: "square.lefthalf.filled")
-            }
-            .font(AppTypography.font(size: 11, weight: .medium))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 12)
-            .frame(minWidth: 44, minHeight: 44)
-            .background(.black.opacity(0.72), in: Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(showsOriginal ? "Show edited photo" : "Show original photo")
-        .accessibilityIdentifier("compareOriginal")
-        .accessibilityValue(showsOriginal ? "Original" : "Edited")
-        .disabled(model.isImporting || model.isSaving)
-    }
-
     private var presetSection: some View {
         let presets = isBlackAndWhite ? PhotoPreset.blackAndWhite : model.selectedFamily.presets
         let name = isBlackAndWhite ? "Black and white" : model.selectedFamily.name
-        let caption = isBlackAndWhite ? "Timeless looks in black and white" : model.selectedFamily.caption
+        let caption = isBlackAndWhite ? "Timeless filters in black and white" : model.selectedFamily.caption
         return VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 5) {
                 sectionLabel(name.uppercased(), detail: "\(presets.count) filters")
@@ -338,7 +415,6 @@ struct EditorView: View {
     private func presetCard(_ preset: PhotoPreset) -> some View {
         let selected = model.selectedPreset == preset
         return Button {
-            showsOriginal = false
             model.selectedPreset = preset
         } label: {
             VStack(alignment: .leading, spacing: 9) {
@@ -414,12 +490,11 @@ struct EditorView: View {
                 .accessibilityLabel("Filter intensity")
                 .accessibilityValue("\(Int((model.intensity * 100).rounded())) percent")
                 .accessibilityIdentifier("intensitySlider")
-                .onChange(of: model.intensity) { _, _ in showsOriginal = false }
 
             HStack {
                 Text("Original")
                 Spacer()
-                Text("Full look")
+                Text("Full filter")
             }
             .font(AppTypography.font(size: 10))
             .foregroundStyle(Palette.muted)
@@ -607,13 +682,9 @@ private struct PhotoDetailView: View {
                 Text(showsOriginal ? "ORIGINAL" : presetName)
                     .font(AppTypography.font(size: 14, weight: .medium))
                 Spacer()
-                Button { toggleZoom() } label: {
-                    Text(scale > 1 ? "1×" : "2×")
-                        .font(AppTypography.font(size: 14, weight: .semibold))
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel(scale > 1 ? "Reset zoom" : "Zoom in two times")
-                .accessibilityIdentifier("togglePhotoZoom")
+                Color.clear
+                    .frame(width: 44, height: 44)
+                    .accessibilityHidden(true)
             }
             .padding(.horizontal, 12)
 
@@ -658,16 +729,21 @@ private struct PhotoDetailView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(showsOriginal ? "Original photo" : "Photo with filter \(presetName)")
                 .accessibilityValue("\(Int((zoom * 100).rounded()))%")
+                .accessibilityAction(named: scale > 1 ? "Reset zoom" : "Zoom in two times") { toggleZoom() }
                 .accessibilityIdentifier("detailPhotoPreview")
             }
 
             VStack(spacing: 12) {
                 Button { showsOriginal.toggle() } label: {
-                    Label(showsOriginal ? "Edit" : "Before / After", systemImage: "square.lefthalf.filled")
+                    Label(
+                        showsOriginal ? "Before applying filter" : "After applying filter",
+                        systemImage: showsOriginal ? "square.righthalf.filled" : "square.lefthalf.filled"
+                    )
                         .font(AppTypography.font(size: 14, weight: .medium))
                         .frame(minHeight: 44)
                 }
                 .accessibilityValue(showsOriginal ? "Original" : "Edited")
+                .accessibilityHint(showsOriginal ? "Shows the photo with the filter" : "Shows the original photo")
                 .accessibilityIdentifier("compareDetailOriginal")
                 Text("Pinch or double-tap to zoom.\nDrag to explore the details.")
                     .font(AppTypography.font(size: 12))

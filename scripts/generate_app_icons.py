@@ -31,6 +31,8 @@ VARIANTS = {
     "mark-white": ("#FFFFFF", None),
 }
 INFO = {"author": "xcode", "version": 1}
+# Scale the symbol around the center while keeping the icon canvas unchanged.
+ICON_SCALE = 0.90
 
 
 def json_bytes(value):
@@ -46,7 +48,7 @@ class StablePDFSurface(cairosvg.surface.PDFSurface):
         return surface, width, height
 
 
-def svg_variants():
+def svg_variants(icon=False):
     master = ET.parse(BRAND / "grain-mark.svg").getroot()
     paths = master.findall(".//{http://www.w3.org/2000/svg}path")
     assert len(paths) == 4, "Keep the approved body and three separate dots"
@@ -59,7 +61,9 @@ def svg_variants():
         result[name] = (
             '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">\n'
             '  <title>Flickerly Grain</title>\n' + backdrop +
-            f'  <g fill="{foreground}">\n' + body + '\n  </g>\n</svg>\n'
+            f'  <g fill="{foreground}"' +
+            (f' transform="translate(512 512) scale({ICON_SCALE}) translate(-512 -512)"' if icon else '') +
+            '>\n' + body + '\n  </g>\n</svg>\n'
         ).encode()
     return result
 
@@ -86,6 +90,7 @@ def pdf(svg):
 def generate():
     outputs = {CATALOG / "Contents.json": json_bytes({"info": INFO})}
     vectors = svg_variants()
+    icon_vectors = svg_variants(icon=True)
     rasters = {}
     for name, svg in vectors.items():
         outputs[BRAND / f"vector/flickerly-{name}.svg"] = svg
@@ -95,7 +100,7 @@ def generate():
             outputs[BRAND / f"png/{name}/flickerly-{name}-{size}.png"] = data
             rasters[name, size] = data
 
-    # Modern Xcode derives the supported iPhone/iPad sizes from these sources.
+    # Keep a standalone PNG catalog for distribution; the app uses AppIcon.icon.
     images = []
     for variant in ["light", "dark", "tinted"]:
         filename = f"AppIcon-{variant.title()}-1024.png"
@@ -103,10 +108,8 @@ def generate():
         if variant != "light":
             entry["appearances"] = [{"appearance": "luminosity", "value": variant}]
         images.append(entry)
-        for folder in [CATALOG / "AppIcon.appiconset", BRAND / "AppIcon.appiconset"]:
-            outputs[folder / filename] = rasters[variant, 1024]
+        outputs[BRAND / "AppIcon.appiconset" / filename] = png(icon_vectors[variant], 1024, VARIANTS[variant][1] is None)
     contents = json_bytes({"images": images, "info": INFO})
-    outputs[CATALOG / "AppIcon.appiconset/Contents.json"] = contents
     outputs[BRAND / "AppIcon.appiconset/Contents.json"] = contents
 
     # A native, recolorable vector asset is available for future in-app branding.
@@ -126,7 +129,7 @@ def generate():
     for idiom, point_size, scale in slots:
         pixel_size = int(point_size * scale)
         filename = f"AppIcon-{pixel_size}.png"
-        outputs[legacy / filename] = rasters["light", pixel_size]
+        outputs[legacy / filename] = png(icon_vectors["light"], pixel_size, False)
         entries.append({"filename": filename, "idiom": idiom, "scale": f"{scale}x", "size": f"{point_size}x{point_size}"})
     outputs[legacy / "Contents.json"] = json_bytes({"images": entries, "info": INFO})
 
@@ -161,7 +164,7 @@ def validate(outputs):
         if "/dark/" in str(path) or "AppIcon-Dark" in path.name:
             assert image.mode == "RGBA" and pixels.getpixel((0, 0))[3] == 0, path
     for variant in ["light", "dark", "tinted"]:
-        name = CATALOG / f"AppIcon.appiconset/AppIcon-{variant.title()}-1024.png"
+        name = BRAND / f"AppIcon.appiconset/AppIcon-{variant.title()}-1024.png"
         assert Image.open(BytesIO(outputs[name])).size == (1024, 1024)
 
 

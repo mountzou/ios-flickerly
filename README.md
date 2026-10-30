@@ -102,14 +102,16 @@ and no public editing or search discovery:
 Anonymous page and text access were verified on October 25, 2026. Readback
 evidence is in `artifacts/app-store/public-links-and-identity/`.
 
-The approved Grain app icon is black on white, with dark and tinted variants. The editable vector, SVG/PDF exports, PNG sizes, legacy catalog and web assets are in [Branding/Flickerly](Branding/Flickerly/README.md). Regenerate or verify them with `scripts/generate_app_icons.py` (`--check` verifies saved files). The active Xcode icon catalog is `Flickerly/Catalog/Assets.xcassets/AppIcon.appiconset`.
+The Grain app icon is dark gray on white, with dark and tinted variants. The editable Icon Composer document used by the app is `Flickerly/Catalog/AppIcon.icon`. The vector, SVG/PDF exports, PNG sizes, legacy catalog and web assets are in [Branding/Flickerly](Branding/Flickerly/README.md). Regenerate or verify the exported assets with `scripts/generate_app_icons.py` (`--check` verifies saved files).
 
 1. Browse **Originals**, **Black and white**, **Paper** and **NILUT** on the home screen. Each collection has a horizontal row of real filtered previews of the same bundled sample photograph at 100%. Black and white groups four existing looks from Originals and Paper.
-2. Tap a card to open its editor with that exact look selected. The editor offers the other looks in the selected collection. Use the back arrow to browse another collection.
-3. Tap **Choose photo** to import your own photo. After import, the **+** appears in the header to choose another photo. The selected look is preserved, with the existing default intensity of 80%. Before import, the sample shows the full-strength look and saving/intensity are unavailable.
-4. Adjust **Intensity** from 0% (original) to 100% (full preset). The **Before / After** button inside the bottom left of the photo toggles the original; changing a look or intensity returns to the edit.
+2. Tap a card to open its editor with that exact look selected. The editor offers the other looks in the selected collection. After importing a photo, use the back arrow to save a draft, discard the current changes, or keep editing. The same choice appears before replacing the current photo.
+3. Tap **Choose photo** to import your own photo. After import, the **+** appears in the header to choose another photo; it is hidden when editing a draft, which remains tied to its original photo. The selected look is preserved, with the existing default intensity of 80%. Before import, the sample shows the full-strength look and saving/intensity are unavailable.
+4. Adjust **Intensity** from 0% (original) to 100% (full preset). Touch and hold the photo to see the original immediately until you release; use the expand button for the detail view and its comparison control.
 5. Tap the **bookmark** at the top right of any filter thumbnail on the home screen or in the editor to add/remove a favorite. Bookmarking a filter does not select or apply it. The **Favorites** row updates immediately.
 6. Tap **Save a copy** and choose Original, Medium or Small after their JPEG sizes are calculated. On the first save, allow Flickerly to add photos. A confirmation appears after the selected image has been written to the library.
+
+The Drafts button beside Settings opens up to 12 locally stored editing sessions. Each draft retains the original image data, selected filter, intensity and collection context for reopening; saving an existing draft updates it. Delete a draft explicitly to free a slot. Exporting a copy to Photos does not automatically remove the draft. Drafts are stored in the app's Application Support directory and are removed if the app is deleted; they are not published or synced by the app.
 
 ## Home, favorites and sample previews
 
